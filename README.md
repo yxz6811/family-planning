@@ -40,7 +40,7 @@ git push -u origin main
 
 | 编号 | 分支 | 规格 | 说明 |
 |------|------|------|------|
-| 001 | `001-family-collab-mvp` | [specs/001-family-collab-mvp/spec.md](specs/001-family-collab-mvp/spec.md) | 家庭协作 MVP：登录、团队、双区任务栏、任务分发（作业/课程/运动） |
+| 001 | `001-family-collab-mvp` | [规格](specs/001-family-collab-mvp/spec.md) · [计划](specs/001-family-collab-mvp/plan.md) | 家庭协作 MVP：登录、团队、双区任务栏、任务分发（作业/课程/运动） |
 
 需求来源：[RESEARCH.md](RESEARCH.md)
 
@@ -48,5 +48,8 @@ git push -u origin main
 
 - [x] 项目宪章 v1.0.0 已确立（2026-06-01）
 - [x] MVP 功能规格 `001-family-collab-mvp`（2026-06-01）
-- [ ] 实现计划（待 `/speckit-plan`）
+- [x] 实现计划与技术设计（2026-06-01）：Next.js + Prisma/SQLite，见 [plan.md](specs/001-family-collab-mvp/plan.md)
+- [ ] 任务分解（待 `/speckit-tasks`）
 - [ ] 代码实现（待 `/speckit-implement`）
+
+**技术栈（MVP）**: Next.js 15 · TypeScript · Prisma · SQLite · Tailwind（暖色主题，无蓝紫渐变）

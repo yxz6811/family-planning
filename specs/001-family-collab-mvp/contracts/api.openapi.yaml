@@ -1,0 +1,420 @@
+openapi: 3.1.0
+info:
+  title: 家庭协作 MVP API
+  version: 0.1.0
+  description: 家庭规划应用 REST 契约（中文错误消息）
+
+servers:
+  - url: http://localhost:3000
+    description: 本地开发
+
+tags:
+  - name: 认证
+  - name: 任务
+  - name: 团队
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [认证]
+      summary: 注册
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/auth/login:
+    post:
+      tags: [认证]
+      summary: 登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      tags: [认证]
+      summary: 退出登录
+      responses:
+        '200':
+          description: 已退出
+
+  /api/auth/me:
+    get:
+      tags: [认证]
+      summary: 当前用户
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/tasks:
+    get:
+      tags: [任务]
+      summary: 当前用户任务栏（分区由客户端或 query 过滤）
+      parameters:
+        - name: zone
+          in: query
+          schema:
+            type: string
+            enum: [pending, done]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pending:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  done:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [任务]
+      summary: 分发任务（课程/运动/作业）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/tasks/{id}/complete:
+    patch:
+      tags: [任务]
+      summary: 打勾完成（课程/运动，或布置者完成审批任务）
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/tasks/{id}/request-approval:
+    patch:
+      tags: [任务]
+      summary: 作业提交审批（为布置者创建审批待办）
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  homework:
+                    $ref: '#/components/schemas/Task'
+                  approvalTask:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: 已存在审批任务
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/team:
+    get:
+      tags: [团队]
+      summary: 当前用户团队与成员
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDetail'
+        '404':
+          description: 尚未加入团队
+    post:
+      tags: [团队]
+      summary: 创建团队
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 我的家庭
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDetail'
+
+  /api/team/invitations:
+    get:
+      tags: [团队]
+      summary: 待处理邀请（被邀请方）
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+    post:
+      tags: [团队]
+      summary: 发出邀请
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inviteeEmail]
+              properties:
+                inviteeEmail:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+
+  /api/team/invitations/{id}:
+    patch:
+      tags: [团队]
+      summary: 接受或拒绝邀请
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [accept, reject]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+
+components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    RegisterInput:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+          minLength: 1
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    SessionUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        teamId:
+          type: string
+          nullable: true
+
+    TaskKind:
+      type: string
+      enum: [COURSE, SPORT, HOMEWORK, APPROVAL]
+
+    TaskStatus:
+      type: string
+      enum: [PENDING, SUBMITTED, DONE]
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/TaskKind'
+        kindLabel:
+          type: string
+          description: 中文类型名
+        content:
+          type: string
+        durationMinutes:
+          type: integer
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assignerName:
+          type: string
+        assigneeName:
+          type: string
+        sourceTaskId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateTaskInput:
+      type: object
+      required: [kind, content, durationMinutes, assigneeId]
+      properties:
+        kind:
+          type: string
+          enum: [COURSE, SPORT, HOMEWORK]
+        content:
+          type: string
+        durationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 480
+        assigneeId:
+          type: string
+
+    TeamDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              displayName:
+                type: string
+              email:
+                type: string
+
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+        teamName:
+          type: string
+        inviterName:
+          type: string
+        inviteeEmail:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 中文错误说明
+
+  responses:
+    BadRequest:
+      description: 请求无效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: 未登录
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: 无权限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

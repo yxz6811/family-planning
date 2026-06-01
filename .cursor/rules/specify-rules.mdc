@@ -3,6 +3,40 @@ alwaysApply: true
 ---
 
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+## 家庭协作 MVP — 实现上下文
+
+**当前计划**: `specs/001-family-collab-mvp/plan.md`  
+**规格**: `specs/001-family-collab-mvp/spec.md`  
+**分支**: `001-family-collab-mvp`
+
+### 技术栈
+
+- Next.js 15 App Router + TypeScript + React 19
+- Prisma + SQLite（`prisma/dev.db`）
+- 认证：邮箱/密码 + bcrypt + iron-session Cookie
+- UI：Tailwind 4，暖色令牌（`#F5F0EB` 背景、`#C67B5C` 主色），**禁止蓝紫渐变**
+- 中文 UI 文案：`lib/messages/zh.ts`
+
+### 目录结构
+
+- `app/` — 页面与 `app/api/*` Route Handlers
+- `components/` — 任务栏、团队、分发表单
+- `lib/services/` — task-service、team-service
+- `prisma/schema.prisma` — 见 `specs/001-family-collab-mvp/data-model.md`
+
+### 常用命令
+
+```bash
+npm run dev
+npx prisma migrate dev
+npm run test
+```
+
+### 交付顺序
+
+P1 认证 → P2 团队 → P3 任务栏 → P4 课程/运动 → P5 作业审批
+
+### 宪章
+
+- 全中文 UI；每用户故事单独 commit；完成后 push 并更新 README
 <!-- SPECKIT END -->
