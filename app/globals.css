@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #f5f0eb;
+  --color-surface: #ffffff;
+  --color-primary: #c67b5c;
+  --color-primary-hover: #b56a4d;
+  --color-text: #2d2a26;
+  --color-muted: #8a8279;
+  --color-success: #5a8f6b;
+  --color-border: #e8e0d8;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+}

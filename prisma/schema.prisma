@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskKind {
+  COURSE
+  SPORT
+  HOMEWORK
+  APPROVAL
+}
+
+enum TaskStatus {
+  PENDING
+  SUBMITTED
+  DONE
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  teamId       String?
+  createdAt    DateTime @default(now())
+
+  team              Team?              @relation(fields: [teamId], references: [id])
+  ownedTeams        Team[]             @relation("TeamOwner")
+  sentInvitations   TeamInvitation[]   @relation("Inviter")
+  receivedInvites   TeamInvitation[]   @relation("Invitee")
+  assignedTasks     Task[]             @relation("Assignee")
+  createdTasks      Task[]             @relation("Assigner")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  owner       User             @relation("TeamOwner", fields: [ownerId], references: [id])
+  members     User[]
+  invitations TeamInvitation[]
+}
+
+model TeamInvitation {
+  id           String           @id @default(cuid())
+  teamId       String
+  inviterId    String
+  inviteeEmail String
+  inviteeId    String?
+  status       InvitationStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  respondedAt  DateTime?
+
+  team    Team  @relation(fields: [teamId], references: [id])
+  inviter User  @relation("Inviter", fields: [inviterId], references: [id])
+  invitee User? @relation("Invitee", fields: [inviteeId], references: [id])
+
+  @@unique([teamId, inviteeEmail, status])
+}
+
+model Task {
+  id              String     @id @default(cuid())
+  kind            TaskKind
+  content         String
+  durationMinutes Int
+  assignerId      String
+  assigneeId      String
+  status          TaskStatus @default(PENDING)
+  sourceTaskId    String?    @unique
+  createdAt       DateTime   @default(now())
+  completedAt     DateTime?
+
+  assigner   User  @relation("Assigner", fields: [assignerId], references: [id])
+  assignee   User  @relation("Assignee", fields: [assigneeId], references: [id])
+  sourceTask Task? @relation("ApprovalLink", fields: [sourceTaskId], references: [id])
+  approval   Task? @relation("ApprovalLink")
+
+  @@index([assigneeId, status])
+  @@index([assignerId])
+}

@@ -1,6 +1,34 @@
 # 家庭规划（Family Planning）
 
-面向家庭的规划与管理应用（开发中）。本仓库使用 [Spec Kit](https://github.com/github/spec-kit) 进行规格驱动开发。
+面向家庭的协作任务管理 Web 应用。使用 [Spec Kit](https://github.com/github/spec-kit) 进行规格驱动开发。
+
+## 功能概览
+
+- 邮箱注册 / 登录，数据按用户隔离
+- 创建家庭团队、邀请成员（需对方接受）
+- 个人任务栏：上方未完成、下方已完成
+- 分发任务：课程、运动（接收者打勾完成）、作业（接收者「审批」→ 布置者审批待办）
+
+## 快速开始
+
+```bash
+cd my-project
+npm install
+cp .env.example .env
+# 编辑 SESSION_SECRET（至少 32 字符）
+npx prisma migrate dev
+npm run db:seed
+npm run dev
+```
+
+浏览器打开 http://localhost:3000
+
+### 演示账号
+
+| 邮箱 | 密码 | 角色 |
+|------|------|------|
+| parent@demo.local | demo1234 | 爸爸 |
+| child@demo.local | demo1234 | 小明 |
 
 ## 项目宪章要点
 
@@ -8,48 +36,27 @@
 
 | 原则 | 说明 |
 |------|------|
-| **UI** | 禁止使用蓝紫渐变色作为主视觉风格 |
-| **语言** | 项目文档与 UI 以简体中文为主；技术术语、代码标识符及如 vibecoding 等约定词汇除外 |
-| **Git** | 每完成一个功能须提交；会话任务全部完成后推送到本仓库并更新本 README |
+| **UI** | 禁止使用蓝紫渐变色作为主视觉（暖陶土 + 米白主题） |
+| **语言** | 简体中文 UI 与文档 |
+| **Git** | 按功能提交；完成后推送远程 |
 
-## 仓库结构
+## 规格与文档
 
-```text
-.specify/          # Spec Kit 配置、模板与宪章
-.cursor/skills/    # Cursor 技能（speckit-*）
-specs/             # 功能规格目录（按功能分支创建）
-```
+| 编号 | 分支 | 文档 |
+|------|------|------|
+| 001 | `001-family-collab-mvp` | [规格](specs/001-family-collab-mvp/spec.md) · [计划](specs/001-family-collab-mvp/plan.md) · [任务](specs/001-family-collab-mvp/tasks.md) |
 
-## 开发流程（Spec Kit）
+## 技术栈
 
-1. `/speckit-specify` — 编写功能规格（中文）
-2. `/speckit-plan` — 实现计划与宪章合规检查
-3. `/speckit-tasks` — 任务分解
-4. `/speckit-implement` — 实现并按功能提交
+Next.js 15 · TypeScript · Prisma · SQLite · iron-session · Tailwind CSS 4 · Zod
 
 ## 远程仓库
 
-- **GitHub**: https://github.com/yxz6811/family-planning
-
-```bash
-git remote add origin https://github.com/yxz6811/family-planning.git  # 若尚未配置
-git push -u origin main
-```
-
-## 当前功能
-
-| 编号 | 分支 | 规格 | 说明 |
-|------|------|------|------|
-| 001 | `001-family-collab-mvp` | [规格](specs/001-family-collab-mvp/spec.md) · [计划](specs/001-family-collab-mvp/plan.md) | 家庭协作 MVP：登录、团队、双区任务栏、任务分发（作业/课程/运动） |
-
-需求来源：[RESEARCH.md](RESEARCH.md)
+https://github.com/yxz6811/family-planning
 
 ## 状态
 
-- [x] 项目宪章 v1.0.0 已确立（2026-06-01）
-- [x] MVP 功能规格 `001-family-collab-mvp`（2026-06-01）
-- [x] 实现计划与技术设计（2026-06-01）：Next.js + Prisma/SQLite，见 [plan.md](specs/001-family-collab-mvp/plan.md)
-- [ ] 任务分解（待 `/speckit-tasks`）
-- [ ] 代码实现（待 `/speckit-implement`）
-
-**技术栈（MVP）**: Next.js 15 · TypeScript · Prisma · SQLite · Tailwind（暖色主题，无蓝紫渐变）
+- [x] 项目宪章 v1.0.0（2026-06-01）
+- [x] MVP 规格与实现计划
+- [x] MVP 代码实现 P1–P5（2026-06-01）
+- [ ] 合并至 `main`（可选 PR）
