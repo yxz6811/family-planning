@@ -36,7 +36,17 @@ git remote add origin https://github.com/yxz6811/family-planning.git  # 若尚�
 git push -u origin main
 ```
 
+## 当前功能
+
+| 编号 | 分支 | 规格 | 说明 |
+|------|------|------|------|
+| 001 | `001-family-collab-mvp` | [specs/001-family-collab-mvp/spec.md](specs/001-family-collab-mvp/spec.md) | 家庭协作 MVP：登录、团队、双区任务栏、任务分发（作业/课程/运动） |
+
+需求来源：[RESEARCH.md](RESEARCH.md)
+
 ## 状态
 
 - [x] 项目宪章 v1.0.0 已确立（2026-06-01）
-- [ ] 首个功能规格与实现（待 `/speckit-specify`）
+- [x] MVP 功能规格 `001-family-collab-mvp`（2026-06-01）
+- [ ] 实现计划（待 `/speckit-plan`）
+- [ ] 代码实现（待 `/speckit-implement`）
