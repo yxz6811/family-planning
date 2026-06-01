@@ -40,7 +40,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+参考 `.specify/memory/constitution.md`，实现前 MUST 全部通过：
+
+| 原则 | 检查项 |
+|------|--------|
+| I. 禁止蓝紫渐变 UI | 设计/原型无蓝紫渐变主视觉；技术选型注明配色约束 |
+| II. 中文优先 | spec/plan/tasks 为中文；UI 文案清单为中文（术语例外已标注） |
+| III. Git 与 README | 任务计划含「每功能提交」检查点；会话结束推送 `origin` 并更新 README |
+
+未通过项 MUST 在「Complexity Tracking」中记录例外理由，否则不得进入 Phase 0。
 
 ## Project Structure
 

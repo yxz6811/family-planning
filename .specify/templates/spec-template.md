@@ -117,6 +117,12 @@
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
 
+## Constitution Compliance *(mandatory)*
+
+- **UI**：本功能界面 MUST 符合宪章原则 I（禁止蓝紫渐变主视觉）；若涉及主题/组件库，列出主色与渐变色值。
+- **语言**：本规格及衍生 UI 文案 MUST 使用简体中文（原则 II）；保留英文的术语须列出并附中文说明。
+- **交付**：实现完成后 MUST 按原则 III 单独提交，并更新根目录 `README.md`。
+
 ## Assumptions
 
 <!--
