@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { getSession } from "@/lib/auth/session";
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return jsonError(parsed.error.errors[0]?.message ?? zh.auth.required, 400);
   }
-  const { email, password, displayName } = parsed.data;
+  const { email, password, displayName, role } = parsed.data;
   const normalized = email.trim().toLowerCase();
   const existing = await prisma.user.findUnique({
     where: { email: normalized },
@@ -21,13 +22,23 @@ export async function POST(request: Request) {
     return jsonError(zh.auth.emailExists, 400);
   }
   const passwordHash = await hashPassword(password);
+  const userRole =
+    role === "parent" ? UserRole.ADMIN : UserRole.EXECUTOR;
   const user = await prisma.user.create({
     data: {
       email: normalized,
       passwordHash,
       displayName: displayName.trim(),
+      role: userRole,
     },
-    select: { id: true, email: true, displayName: true, teamId: true },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      teamId: true,
+      role: true,
+      points: true,
+    },
   });
   const session = await getSession();
   session.userId = user.id;

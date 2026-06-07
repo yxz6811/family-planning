@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EXECUTOR
+}
+
 enum TaskKind {
   COURSE
   SPORT
@@ -18,6 +24,14 @@ enum TaskStatus {
   PENDING
   SUBMITTED
   DONE
+  REJECTED
+}
+
+enum Mood {
+  HAPPY
+  NEUTRAL
+  TIRED
+  DIFFICULT
 }
 
 enum InvitationStatus {
@@ -31,6 +45,8 @@ model User {
   email        String   @unique
   passwordHash String
   displayName  String
+  role         UserRole @default(EXECUTOR)
+  points       Int      @default(0)
   teamId       String?
   createdAt    DateTime @default(now())
 
@@ -75,6 +91,11 @@ model Task {
   kind            TaskKind
   content         String
   durationMinutes Int
+  subjectTag      String?
+  pointsReward    Int        @default(0)
+  mood            Mood?
+  submitNote      String?
+  rejectionNote   String?
   assignerId      String
   assigneeId      String
   status          TaskStatus @default(PENDING)

@@ -1,13 +1,23 @@
 # 家庭规划（Family Planning）
 
-面向家庭的协作任务管理 Web 应用。使用 [Spec Kit](https://github.com/github/spec-kit) 进行规格驱动开发。
+面向 K12 家庭的 **任务协同 · 正向激励 · 客观记录** Web 应用。产品需求对齐 [docs/PRODUCT-PRD.md](docs/PRODUCT-PRD.md)（来源 PRD「智学伴家」，本项目名称不变）。
 
-## 功能概览
+## 功能概览（一期 MVP）
 
-- 邮箱注册 / 登录，数据按用户隔离
-- 创建家庭团队、邀请成员（需对方接受）
-- 个人任务栏：上方未完成、下方已完成
-- 分发任务：课程、运动（接收者打勾完成）、作业（接收者「审批」→ 布置者审批待办）
+| 模块 | 能力 |
+|------|------|
+| 家庭与角色 | 注册时选择家长/孩子；创建家庭者为超级管理员 |
+| 任务看板 | 待完成 / 已完成双区；学科标签；积分奖励 |
+| 布置任务 | 家长向孩子布置作业/课程/运动，设置预计时长与积分 |
+| 提交验收 | 孩子提交时记录心情；家长「通过发积分」或「打回重做」 |
+| 专注计时 | 任务卡片内置番茄钟（按预计时长） |
+
+### 演进路线
+
+- **二期**：AI 截图导入作业、静默批改、每日总结
+- **三期**：AI 小导师、错题本、家庭周会、IoT 联动
+
+详见 [docs/PRODUCT-PRD.md](docs/PRODUCT-PRD.md)
 
 ## 快速开始
 
@@ -15,7 +25,6 @@
 cd my-project
 npm install
 cp .env.example .env
-# 编辑 SESSION_SECRET（至少 32 字符）
 npx prisma migrate dev
 npm run db:seed
 npm run dev
@@ -27,36 +36,30 @@ npm run dev
 
 | 邮箱 | 密码 | 角色 |
 |------|------|------|
-| parent@demo.local | demo1234 | 爸爸 |
-| child@demo.local | demo1234 | 小明 |
+| parent@demo.local | demo1234 | 家长（超级管理员） |
+| child@demo.local | demo1234 | 孩子 |
 
-## 项目宪章要点
+## 线上环境
 
-完整宪章见 [`.specify/memory/constitution.md`](.specify/memory/constitution.md)（v1.0.0）。
+- **地址**: https://yangxizhe.com/family-planning/login
+- **部署**: `/var/www/family-planning`，PM2 端口 `3042`
 
-| 原则 | 说明 |
+## 宪章要点
+
+见 [`.specify/memory/constitution.md`](.specify/memory/constitution.md)：暖色 UI（无蓝紫渐变）、全中文、按功能提交。
+
+## 规格文档
+
+| 文档 | 说明 |
 |------|------|
-| **UI** | 禁止使用蓝紫渐变色作为主视觉（暖陶土 + 米白主题） |
-| **语言** | 简体中文 UI 与文档 |
-| **Git** | 按功能提交；完成后推送远程 |
-
-## 规格与文档
-
-| 编号 | 分支 | 文档 |
-|------|------|------|
-| 001 | `001-family-collab-mvp` | [规格](specs/001-family-collab-mvp/spec.md) · [计划](specs/001-family-collab-mvp/plan.md) · [任务](specs/001-family-collab-mvp/tasks.md) |
+| [RESEARCH.md](RESEARCH.md) | 需求来源 |
+| [docs/PRODUCT-PRD.md](docs/PRODUCT-PRD.md) | PRD 对齐与 Roadmap |
+| [specs/001-family-collab-mvp/spec.md](specs/001-family-collab-mvp/spec.md) | 功能规格 |
 
 ## 技术栈
 
-Next.js 15 · TypeScript · Prisma · SQLite · iron-session · Tailwind CSS 4 · Zod
+Next.js 15 · TypeScript · Prisma · SQLite · iron-session · Tailwind CSS 4
 
 ## 远程仓库
 
 https://github.com/yxz6811/family-planning
-
-## 状态
-
-- [x] 项目宪章 v1.0.0（2026-06-01）
-- [x] MVP 规格与实现计划
-- [x] MVP 代码实现 P1–P5（2026-06-01）
-- [ ] 合并至 `main`（可选 PR）

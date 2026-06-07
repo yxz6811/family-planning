@@ -1,7 +1,7 @@
 import { requireUserApi } from "@/lib/auth/session";
 import { jsonError } from "@/lib/api-response";
-import { requestHomeworkApproval } from "@/lib/services/task-service";
-import { submitHomeworkSchema } from "@/lib/validators";
+import { rejectHomework } from "@/lib/services/task-service";
+import { rejectHomeworkSchema } from "@/lib/validators";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
@@ -11,22 +11,20 @@ export async function PATCH(
   const auth = await requireUserApi();
   if (!auth.ok) return jsonError(auth.error, auth.status);
   const body = await request.json().catch(() => ({}));
-  const parsed = submitHomeworkSchema.safeParse(body);
+  const parsed = rejectHomeworkSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError(parsed.error.errors[0]?.message ?? "请选择心情", 400);
+    return jsonError("请求无效", 400);
   }
   const { id } = await params;
   try {
-    const result = await requestHomeworkApproval(
+    const task = await rejectHomework(
       id,
       auth.user.id,
-      parsed.data
+      parsed.data.rejectionNote
     );
-    return NextResponse.json(result);
+    return NextResponse.json(task);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "请求无效";
-    if (msg.includes("已存在")) return jsonError(msg, 409);
-    const status = msg.includes("无权") ? 403 : 400;
-    return jsonError(msg, status);
+    return jsonError(msg, msg.includes("无权") ? 403 : 400);
   }
 }

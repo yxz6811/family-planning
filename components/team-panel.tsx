@@ -2,12 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { zh } from "@/lib/messages/zh";
+import { withBasePath } from "@/lib/base-path";
+import { roleLabel, zh } from "@/lib/messages/zh";
 
 interface Member {
   id: string;
   email: string;
   displayName: string;
+  role?: string;
+  points?: number;
 }
 
 interface Team {
@@ -41,7 +44,7 @@ export function TeamPanel({ team, pendingInvites }: TeamPanelProps) {
 
   async function createTeam() {
     setError("");
-    const res = await fetch("/api/team", {
+    const res = await fetch(withBasePath("/api/team"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: teamName }),
@@ -57,7 +60,7 @@ export function TeamPanel({ team, pendingInvites }: TeamPanelProps) {
 
   async function sendInvite() {
     setError("");
-    const res = await fetch("/api/team/invitations", {
+    const res = await fetch(withBasePath("/api/team/invitations"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ inviteeEmail }),
@@ -74,7 +77,7 @@ export function TeamPanel({ team, pendingInvites }: TeamPanelProps) {
 
   async function respondInvite(id: string, action: "accept" | "reject") {
     setError("");
-    const res = await fetch(`/api/team/invitations/${id}`, {
+    const res = await fetch(withBasePath(`/api/team/invitations/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
@@ -158,7 +161,10 @@ export function TeamPanel({ team, pendingInvites }: TeamPanelProps) {
                 className="rounded-md bg-[var(--color-bg)] px-3 py-2 text-sm"
               >
                 {m.displayName}{" "}
-                <span className="text-[var(--color-muted)]">({m.email})</span>
+                <span className="text-[var(--color-muted)]">
+                  ({roleLabel(m.role ?? "EXECUTOR")} · {m.points ?? 0}{" "}
+                  {zh.nav.points})
+                </span>
               </li>
             ))}
           </ul>

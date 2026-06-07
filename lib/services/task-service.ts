@@ -1,6 +1,7 @@
-import { TaskKind, TaskStatus } from "@prisma/client";
+import { TaskKind, TaskStatus, UserRole, type Mood } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { taskKindLabel, zh } from "@/lib/messages/zh";
+import { defaultPointsForKind, type MoodValue } from "@/lib/constants/product";
+import { moodLabel, taskKindLabel, zh } from "@/lib/messages/zh";
 
 /**
  * 序列化任务供 API/前端使用
@@ -11,6 +12,11 @@ export function serializeTask(
     kind: TaskKind;
     content: string;
     durationMinutes: number;
+    subjectTag: string | null;
+    pointsReward: number;
+    mood: Mood | null;
+    submitNote: string | null;
+    rejectionNote: string | null;
     status: TaskStatus;
     sourceTaskId: string | null;
     createdAt: Date;
@@ -25,6 +31,12 @@ export function serializeTask(
     kindLabel: taskKindLabel(task.kind),
     content: task.content,
     durationMinutes: task.durationMinutes,
+    subjectTag: task.subjectTag,
+    pointsReward: task.pointsReward,
+    mood: task.mood,
+    moodLabel: task.mood ? moodLabel(task.mood) : null,
+    submitNote: task.submitNote,
+    rejectionNote: task.rejectionNote,
     status: task.status,
     assignerName: task.assigner.displayName,
     assigneeName: task.assignee.displayName,
@@ -91,6 +103,8 @@ export async function createTask(
     content: string;
     durationMinutes: number;
     assigneeId: string;
+    subjectTag?: string;
+    pointsReward?: number;
   }
 ) {
   if (assignerId === input.assigneeId) {
@@ -103,11 +117,21 @@ export async function createTask(
   if (!assigner?.teamId || assigner.teamId !== assignee?.teamId) {
     throw new Error(zh.assign.notSameTeam);
   }
+  if (
+    assigner.role !== UserRole.SUPER_ADMIN &&
+    assigner.role !== UserRole.ADMIN
+  ) {
+    throw new Error(zh.errors.parentOnly);
+  }
+  const points =
+    input.pointsReward ?? defaultPointsForKind(input.kind);
   const task = await prisma.task.create({
     data: {
       kind: input.kind as TaskKind,
       content: input.content.trim(),
       durationMinutes: input.durationMinutes,
+      subjectTag: input.subjectTag?.trim() || null,
+      pointsReward: points,
       assignerId,
       assigneeId: input.assigneeId,
       status: TaskStatus.PENDING,
@@ -118,7 +142,7 @@ export async function createTask(
 }
 
 /**
- * 完成课程/运动或布置者完成审批任务
+ * 完成课程/运动任务
  */
 export async function completeTask(taskId: string, userId: string) {
   const task = await prisma.task.findUnique({
@@ -134,6 +158,9 @@ export async function completeTask(taskId: string, userId: string) {
   if (task.kind === TaskKind.HOMEWORK) {
     throw new Error(zh.errors.wrongTaskKind);
   }
+  if (task.kind === TaskKind.APPROVAL) {
+    return approveHomework(taskId, userId);
+  }
   const updated = await prisma.task.update({
     where: { id: taskId },
     data: { status: TaskStatus.DONE, completedAt: new Date() },
@@ -143,9 +170,13 @@ export async function completeTask(taskId: string, userId: string) {
 }
 
 /**
- * 作业提交审批：更新 B 侧并创建 A 的审批任务
+ * 作业提交验收（含心情）
  */
-export async function requestHomeworkApproval(taskId: string, userId: string) {
+export async function requestHomeworkApproval(
+  taskId: string,
+  userId: string,
+  input: { mood: MoodValue; submitNote?: string }
+) {
   const homework = await prisma.task.findUnique({
     where: { id: taskId },
     include: {
@@ -164,15 +195,21 @@ export async function requestHomeworkApproval(taskId: string, userId: string) {
   if (homework.status !== TaskStatus.PENDING) {
     throw new Error(zh.errors.homeworkNotPending);
   }
-  if (homework.approval) {
+  if (homework.approval && homework.approval.status === TaskStatus.PENDING) {
     throw new Error(zh.errors.approvalExists);
   }
-  const approvalTitle = `审批 ${homework.assignee.displayName} 的作业`;
+  const approvalTitle = `验收 ${homework.assignee.displayName} 的${homework.subjectTag ?? "作业"}`;
   const result = await prisma.$transaction(async (tx) => {
+    if (homework.approval) {
+      await tx.task.delete({ where: { id: homework.approval.id } });
+    }
     const updatedHomework = await tx.task.update({
       where: { id: taskId },
       data: {
         status: TaskStatus.SUBMITTED,
+        mood: input.mood as Mood,
+        submitNote: input.submitNote?.trim() || null,
+        rejectionNote: null,
         completedAt: new Date(),
       },
       include: taskInclude,
@@ -182,6 +219,8 @@ export async function requestHomeworkApproval(taskId: string, userId: string) {
         kind: TaskKind.APPROVAL,
         content: `${approvalTitle}：${homework.content}`,
         durationMinutes: homework.durationMinutes,
+        subjectTag: homework.subjectTag,
+        pointsReward: homework.pointsReward,
         assignerId: homework.assignerId,
         assigneeId: homework.assignerId,
         status: TaskStatus.PENDING,
@@ -195,4 +234,93 @@ export async function requestHomeworkApproval(taskId: string, userId: string) {
     homework: serializeTask(result.homework),
     approvalTask: serializeTask(result.approvalTask),
   };
+}
+
+/**
+ * 家长验收通过：发放积分
+ */
+export async function approveHomework(approvalTaskId: string, userId: string) {
+  const approval = await prisma.task.findUnique({
+    where: { id: approvalTaskId },
+    include: {
+      sourceTask: { include: { assignee: true } },
+    },
+  });
+  if (
+    !approval ||
+    approval.assigneeId !== userId ||
+    approval.kind !== TaskKind.APPROVAL ||
+    approval.status !== TaskStatus.PENDING ||
+    !approval.sourceTask
+  ) {
+    throw new Error(zh.errors.forbidden);
+  }
+  const homework = approval.sourceTask;
+  const points = homework.pointsReward || 0;
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedApproval = await tx.task.update({
+      where: { id: approvalTaskId },
+      data: { status: TaskStatus.DONE, completedAt: new Date() },
+      include: taskInclude,
+    });
+    const updatedHomework = await tx.task.update({
+      where: { id: homework.id },
+      data: { status: TaskStatus.DONE },
+      include: taskInclude,
+    });
+    if (points > 0) {
+      await tx.user.update({
+        where: { id: homework.assigneeId },
+        data: { points: { increment: points } },
+      });
+    }
+    return { approval: updatedApproval, homework: updatedHomework, pointsAwarded: points };
+  });
+  return {
+    task: serializeTask(result.approval),
+    pointsAwarded: result.pointsAwarded,
+  };
+}
+
+/**
+ * 家长打回重做
+ */
+export async function rejectHomework(
+  approvalTaskId: string,
+  userId: string,
+  rejectionNote?: string
+) {
+  const approval = await prisma.task.findUnique({
+    where: { id: approvalTaskId },
+    include: { sourceTask: true },
+  });
+  if (
+    !approval ||
+    approval.assigneeId !== userId ||
+    approval.kind !== TaskKind.APPROVAL ||
+    approval.status !== TaskStatus.PENDING ||
+    !approval.sourceTask
+  ) {
+    throw new Error(zh.errors.forbidden);
+  }
+  const note = rejectionNote?.trim() || zh.approval.defaultRejectNote;
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.task.update({
+      where: { id: approvalTaskId },
+      data: { status: TaskStatus.DONE, completedAt: new Date() },
+    });
+    const homework = await tx.task.update({
+      where: { id: approval.sourceTask!.id },
+      data: {
+        status: TaskStatus.PENDING,
+        mood: null,
+        submitNote: null,
+        completedAt: null,
+        rejectionNote: note,
+      },
+      include: taskInclude,
+    });
+    return homework;
+  });
+  return serializeTask(result);
 }

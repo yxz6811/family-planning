@@ -27,5 +27,7 @@ export async function POST(request: Request) {
     email: user.email,
     displayName: user.displayName,
     teamId: user.teamId,
+    role: user.role,
+    points: user.points,
   });
 }

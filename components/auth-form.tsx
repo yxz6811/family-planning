@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 import { zh } from "@/lib/messages/zh";
 
 interface AuthFormProps {
@@ -17,6 +18,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<"parent" | "child">("parent");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,12 +26,13 @@ export function AuthForm({ mode }: AuthFormProps) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const url =
-      mode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const url = withBasePath(
+      mode === "login" ? "/api/auth/login" : "/api/auth/register"
+    );
     const body =
       mode === "login"
         ? { email, password }
-        : { email, password, displayName };
+        : { email, password, displayName, role };
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -52,15 +55,40 @@ export function AuthForm({ mode }: AuthFormProps) {
       </h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {mode === "register" && (
-          <label className="flex flex-col gap-1 text-sm">
-            {zh.auth.displayName}
-            <input
-              className="rounded-md border border-[var(--color-border)] px-3 py-2"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-            />
-          </label>
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              {zh.auth.displayName}
+              <input
+                className="rounded-md border border-[var(--color-border)] px-3 py-2"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+              />
+            </label>
+            <fieldset className="flex flex-col gap-2 text-sm">
+              <legend>{zh.auth.role}</legend>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="role"
+                  value="parent"
+                  checked={role === "parent"}
+                  onChange={() => setRole("parent")}
+                />
+                {zh.auth.roleParent}
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="role"
+                  value="child"
+                  checked={role === "child"}
+                  onChange={() => setRole("child")}
+                />
+                {zh.auth.roleChild}
+              </label>
+            </fieldset>
+          </>
         )}
         <label className="flex flex-col gap-1 text-sm">
           {zh.auth.email}

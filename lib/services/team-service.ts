@@ -1,4 +1,4 @@
-import { InvitationStatus } from "@prisma/client";
+import { InvitationStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { zh } from "@/lib/messages/zh";
 
@@ -13,7 +13,13 @@ export async function getTeamForUser(userId: string) {
       team: {
         include: {
           members: {
-            select: { id: true, email: true, displayName: true },
+            select: {
+              id: true,
+              email: true,
+              displayName: true,
+              role: true,
+              points: true,
+            },
           },
         },
       },
@@ -49,7 +55,7 @@ export async function createTeam(userId: string, name?: string) {
   });
   await prisma.user.update({
     where: { id: userId },
-    data: { teamId: team.id },
+    data: { teamId: team.id, role: UserRole.SUPER_ADMIN },
   });
   return { id: team.id, name: team.name, members: team.members };
 }
