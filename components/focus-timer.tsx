@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pause, Play, Timer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { zh } from "@/lib/messages/zh";
 
 interface FocusTimerProps {
@@ -31,27 +33,53 @@ export function FocusTimer({ durationMinutes }: FocusTimerProps) {
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
   const done = remaining === 0;
+  const progress = ((totalSeconds - remaining) / totalSeconds) * 100;
 
   return (
-    <div className="mt-3 rounded-md bg-[var(--color-bg)] px-3 py-2">
+    <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
       <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="text-[var(--color-muted)]">专注计时</span>
+        <span className="inline-flex items-center gap-1.5 text-[var(--color-muted)]">
+          <Timer className="h-4 w-4" aria-hidden />
+          专注计时
+        </span>
         <span className="font-mono text-lg tabular-nums text-[var(--color-primary)]">
           {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
         </span>
       </div>
+      <div
+        className="mb-3 h-1.5 overflow-hidden rounded-[var(--radius-full)] bg-[var(--color-surface)]"
+        role="progressbar"
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          className="h-full rounded-[var(--radius-full)] bg-[var(--color-primary)] transition-[width] duration-1000 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
       <div className="flex gap-2">
         {!done && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setRunning((r) => !r)}
-            className="rounded-md border border-[var(--color-border)] px-3 py-1 text-xs hover:bg-[var(--color-surface)]"
           >
-            {running ? zh.taskBoard.focusPause : zh.taskBoard.focusStart}
-          </button>
+            {running ? (
+              <>
+                <Pause className="h-3.5 w-3.5" aria-hidden />
+                {zh.taskBoard.focusPause}
+              </>
+            ) : (
+              <>
+                <Play className="h-3.5 w-3.5" aria-hidden />
+                {zh.taskBoard.focusStart}
+              </>
+            )}
+          </Button>
         )}
         {done && (
-          <span className="text-xs text-[var(--color-success)]">
+          <span className="text-sm text-[var(--color-success)]">
             {zh.taskBoard.focusDone}
           </span>
         )}

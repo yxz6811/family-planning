@@ -14,7 +14,7 @@ export default async function AppLayout({
         role={user.role}
         points={user.points}
       />
-      <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-3xl px-4 pb-8 pt-2">{children}</main>
     </>
   );
 }

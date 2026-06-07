@@ -1,18 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f5f0eb;
+  --color-bg: #fff1f2;
   --color-surface: #ffffff;
-  --color-primary: #c67b5c;
-  --color-primary-hover: #b56a4d;
-  --color-text: #2d2a26;
-  --color-muted: #8a8279;
-  --color-success: #5a8f6b;
-  --color-border: #e8e0d8;
+  --color-primary: #e11d48;
+  --color-primary-hover: #be123c;
+  --color-secondary: #fb7185;
+  --color-cta: #f97316;
+  --color-text: #431407;
+  --color-muted: #78716c;
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-border: #fecdd3;
+  --color-ring: #fb7185;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.font-heading {
+  font-family: var(--font-heading), "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/**
+ * 全局交互样式：焦点环、过渡、可点击光标
+ */
+@layer utilities {
+  .interactive {
+    cursor: pointer;
+    transition: color 200ms ease, background-color 200ms ease,
+      border-color 200ms ease, opacity 200ms ease;
+  }
+
+  .focus-ring {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ring) 35%, transparent);
+    border-color: var(--color-primary);
+  }
 }

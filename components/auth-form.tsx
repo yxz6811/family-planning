@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, Input } from "@/components/ui/field";
 import { withBasePath } from "@/lib/base-path";
+import { cn } from "@/lib/cn";
 import { zh } from "@/lib/messages/zh";
 
 interface AuthFormProps {
@@ -49,98 +53,93 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-xl bg-[var(--color-surface)] p-8 shadow-sm">
-      <h1 className="mb-6 text-2xl font-semibold">
+    <Card className="w-full max-w-md p-8">
+      <h2 className="font-heading mb-6 text-2xl font-semibold">
         {mode === "login" ? zh.auth.loginTitle : zh.auth.registerTitle}
-      </h1>
+      </h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {mode === "register" && (
           <>
-            <label className="flex flex-col gap-1 text-sm">
-              {zh.auth.displayName}
-              <input
-                className="rounded-md border border-[var(--color-border)] px-3 py-2"
+            <Field label={zh.auth.displayName}>
+              <Input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
               />
-            </label>
-            <fieldset className="flex flex-col gap-2 text-sm">
-              <legend>{zh.auth.role}</legend>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="role"
-                  value="parent"
-                  checked={role === "parent"}
-                  onChange={() => setRole("parent")}
-                />
-                {zh.auth.roleParent}
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="role"
-                  value="child"
-                  checked={role === "child"}
-                  onChange={() => setRole("child")}
-                />
-                {zh.auth.roleChild}
-              </label>
+            </Field>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-1 text-sm font-medium text-[var(--color-text)]">
+                {zh.auth.role}
+              </legend>
+              <div className="flex gap-2">
+                {(["parent", "child"] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={cn(
+                      "interactive focus-ring flex-1 rounded-[var(--radius-sm)] border-2 px-3 py-2 text-sm",
+                      role === r
+                        ? "border-[var(--color-primary)] bg-[var(--color-bg)] font-medium text-[var(--color-primary)]"
+                        : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-secondary)]"
+                    )}
+                  >
+                    {r === "parent" ? zh.auth.roleParent : zh.auth.roleChild}
+                  </button>
+                ))}
+              </div>
             </fieldset>
           </>
         )}
-        <label className="flex flex-col gap-1 text-sm">
-          {zh.auth.email}
-          <input
+        <Field label={zh.auth.email}>
+          <Input
             type="email"
-            className="rounded-md border border-[var(--color-border)] px-3 py-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          {zh.auth.password}
-          <input
+        </Field>
+        <Field label={zh.auth.password}>
+          <Input
             type="password"
-            className="rounded-md border border-[var(--color-border)] px-3 py-2"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={mode === "register" ? 8 : 1}
           />
-        </label>
+        </Field>
         {error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="rounded-[var(--radius-sm)] bg-[var(--color-danger-soft)] px-3 py-2 text-sm text-[var(--color-danger)]" role="alert">
             {error}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-[var(--color-primary)] py-2 font-medium text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {mode === "login" ? zh.auth.loginSubmit : zh.auth.registerSubmit}
-        </button>
+        </Button>
       </form>
       <p className="mt-4 text-center text-sm text-[var(--color-muted)]">
         {mode === "login" ? (
           <>
             还没有账户？{" "}
-            <Link href="/register" className="text-[var(--color-primary)]">
+            <Link
+              href="/register"
+              className="interactive font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
+            >
               {zh.nav.register}
             </Link>
           </>
         ) : (
           <>
             已有账户？{" "}
-            <Link href="/login" className="text-[var(--color-primary)]">
+            <Link
+              href="/login"
+              className="interactive font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
+            >
               {zh.nav.login}
             </Link>
           </>
         )}
       </p>
-    </div>
+    </Card>
   );
 }

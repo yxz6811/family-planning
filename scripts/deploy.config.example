@@ -1,0 +1,9 @@
+# 复制为 deploy.config 并按需修改（deploy.config 已被 git 忽略）
+# cp scripts/deploy.config.example scripts/deploy.config
+
+DEPLOY_SSH_PORT=41326
+DEPLOY_SSH_USER=root
+DEPLOY_SSH_HOST=193.134.211.194
+DEPLOY_REMOTE_DIR=/var/www/family-planning
+DEPLOY_PM2_NAME=family-planning
+DEPLOY_HEALTH_URL=https://yangxizhe.com/family-planning/login/

@@ -44,6 +44,24 @@ npm run dev
 - **地址**: https://yangxizhe.com/family-planning/login
 - **部署**: `/var/www/family-planning`，PM2 端口 `3042`
 
+### 一键上线
+
+在项目根目录执行（需本机可 SSH 到服务器）：
+
+```bash
+npm run deploy
+```
+
+可选：
+
+```bash
+npm run deploy:seed          # 上线并刷新演示账号
+npm run deploy -- --check    # 仅本地 build，不同步
+```
+
+服务器 SSH / 路径等默认值见 `scripts/deploy.config.example`；复制为 `scripts/deploy.config` 可覆盖。
+脚本不会覆盖服务器上的 `.env` 与 `prisma/prod.db`。
+
 ## 宪章要点
 
 见 [`.specify/memory/constitution.md`](.specify/memory/constitution.md)：暖色 UI（无蓝紫渐变）、全中文、按功能提交。

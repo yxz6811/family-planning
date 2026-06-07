@@ -2,10 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Clock, Coins, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Field, Input } from "@/components/ui/field";
+import { FocusTimer } from "@/components/focus-timer";
 import { MOOD_OPTIONS } from "@/lib/constants/product";
 import { withBasePath } from "@/lib/base-path";
+import { cn } from "@/lib/cn";
 import { zh } from "@/lib/messages/zh";
-import { FocusTimer } from "@/components/focus-timer";
 
 export interface TaskItem {
   id: string;
@@ -97,157 +103,133 @@ export function TaskCard({ task, zone }: TaskCardProps) {
     task.kind !== "APPROVAL";
 
   return (
-    <article className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[var(--color-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-primary)]">
-          {task.kindLabel}
-        </span>
-        {task.subjectTag && (
-          <span className="rounded-full bg-[#E8F0E6] px-2.5 py-0.5 text-xs text-[var(--color-success)]">
-            {task.subjectTag}
-          </span>
-        )}
-        <span className="ml-auto text-xs text-[var(--color-muted)]">
+    <Card className={cn("p-4", zone === "done" && "opacity-80")}>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Badge>{task.kindLabel}</Badge>
+        {task.subjectTag && <Badge variant="success">{task.subjectTag}</Badge>}
+        <span className="ml-auto inline-flex items-center gap-1 text-xs text-[var(--color-muted)]">
+          <Clock className="h-3.5 w-3.5" aria-hidden />
           {task.durationMinutes} {zh.taskBoard.minutes}
         </span>
       </div>
-      <p className="mb-2 text-base leading-relaxed text-[var(--color-text)]">
-        {task.content}
-      </p>
-      <p className="mb-2 text-xs text-[var(--color-muted)]">
-        {zh.taskBoard.from} {task.assignerName}
+      <p className="mb-3 text-base leading-relaxed">{task.content}</p>
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-muted)]">
+        <span className="inline-flex items-center gap-1">
+          <User className="h-3.5 w-3.5" aria-hidden />
+          {zh.taskBoard.from} {task.assignerName}
+        </span>
         {task.pointsReward ? (
-          <span className="ml-2 text-[var(--color-primary)]">
-            · {zh.taskBoard.pointsReward} {task.pointsReward} {zh.nav.points}
+          <span className="inline-flex items-center gap-1 text-[var(--color-cta)]">
+            <Coins className="h-3.5 w-3.5" aria-hidden />
+            {zh.taskBoard.pointsReward} {task.pointsReward} {zh.nav.points}
           </span>
         ) : null}
         {task.status === "SUBMITTED" && (
-          <span className="ml-2 text-[var(--color-success)]">
-            · {zh.taskBoard.submittedLabel}
-          </span>
+          <Badge variant="success">{zh.taskBoard.submittedLabel}</Badge>
         )}
-        {task.moodLabel && (
-          <span className="ml-2">· 心情：{task.moodLabel}</span>
-        )}
+        {task.moodLabel && <span>心情：{task.moodLabel}</span>}
         {task.rejectionNote && zone === "pending" && (
-          <span className="ml-2 text-red-600">
-            · {zh.taskBoard.rejectedLabel}：{task.rejectionNote}
+          <span className="text-[var(--color-danger)]">
+            {zh.taskBoard.rejectedLabel}：{task.rejectionNote}
           </span>
         )}
-      </p>
+      </div>
 
       {showFocus && <FocusTimer durationMinutes={task.durationMinutes} />}
 
       <div className="mt-3 flex flex-wrap gap-2">
         {showComplete && (
-          <button
-            type="button"
+          <Button
+            variant="success"
+            size="sm"
             disabled={loading}
             onClick={handleComplete}
-            className="rounded-md bg-[var(--color-success)] px-4 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-60"
           >
             {zh.taskBoard.complete}
-          </button>
+          </Button>
         )}
         {showApproval && !showMood && (
-          <button
-            type="button"
+          <Button
+            size="sm"
             disabled={loading}
             onClick={() => setShowMood(true)}
-            className="rounded-md bg-[var(--color-primary)] px-4 py-1.5 text-sm text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
           >
             {zh.taskBoard.requestApproval}
-          </button>
+          </Button>
         )}
         {showParentApproval && !showReject && (
           <>
-            <button
-              type="button"
+            <Button
+              variant="success"
+              size="sm"
               disabled={loading}
               onClick={handleComplete}
-              className="rounded-md bg-[var(--color-success)] px-4 py-1.5 text-sm text-white disabled:opacity-60"
             >
               {zh.taskBoard.approvePass}
               {task.pointsReward ? ` (+${task.pointsReward})` : ""}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               disabled={loading}
               onClick={() => setShowReject(true)}
-              className="rounded-md border border-red-300 px-4 py-1.5 text-sm text-red-700 disabled:opacity-60"
+              className="border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
             >
               {zh.taskBoard.approveReject}
-            </button>
+            </Button>
           </>
         )}
       </div>
 
       {showMood && (
-        <div className="mt-3 rounded-md border border-[var(--color-border)] p-3">
-          <p className="mb-2 text-sm font-medium">{zh.mood.title}</p>
-          <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+          <p className="mb-3 text-sm font-medium">{zh.mood.title}</p>
+          <div className="mb-4 flex flex-wrap gap-2">
             {MOOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setMood(opt.value)}
-                className={
+                className={cn(
+                  "interactive focus-ring rounded-[var(--radius-full)] px-3 py-1.5 text-xs",
                   mood === opt.value
-                    ? "rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs text-white"
-                    : "rounded-full border border-[var(--color-border)] px-3 py-1 text-xs"
-                }
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-secondary)]"
+                )}
               >
                 {opt.label}
               </button>
             ))}
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleSubmitHomework}
-              className="rounded-md bg-[var(--color-primary)] px-3 py-1 text-sm text-white"
-            >
+            <Button size="sm" disabled={loading} onClick={handleSubmitHomework}>
               确认提交
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowMood(false)}
-              className="text-sm text-[var(--color-muted)]"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowMood(false)}>
               取消
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {showReject && (
-        <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3">
-          <input
-            className="mb-2 w-full rounded-md border border-[var(--color-border)] px-2 py-1 text-sm"
-            placeholder={zh.approval.rejectPlaceholder}
-            value={rejectNote}
-            onChange={(e) => setRejectNote(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleReject}
-              className="rounded-md bg-red-600 px-3 py-1 text-sm text-white"
-            >
+        <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4">
+          <Field label={zh.approval.rejectPlaceholder}>
+            <Input
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+            />
+          </Field>
+          <div className="mt-3 flex gap-2">
+            <Button variant="danger" size="sm" disabled={loading} onClick={handleReject}>
               确认打回
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowReject(false)}
-              className="text-sm text-[var(--color-muted)]"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowReject(false)}>
               取消
-            </button>
+            </Button>
           </div>
         </div>
       )}
-    </article>
+    </Card>
   );
 }
