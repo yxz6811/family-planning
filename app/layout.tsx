@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Baloo_2, Noto_Sans_SC } from "next/font/google";
+import { Lora, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { zh } from "@/lib/messages/zh";
 
-const headingFont = Baloo_2({
+const headingFont = Lora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-heading",

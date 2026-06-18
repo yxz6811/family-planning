@@ -13,7 +13,7 @@ const variantClasses: Record<BadgeVariant, string> = {
     "bg-[var(--color-bg)] text-[var(--color-primary)] border border-[var(--color-border)]",
   success: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
   muted: "bg-[var(--color-bg)] text-[var(--color-muted)]",
-  cta: "bg-[color-mix(in_srgb,var(--color-cta)_15%,white)] text-[var(--color-cta)]",
+  cta: "bg-[color-mix(in_srgb,var(--color-cta)_18%,var(--color-surface))] text-[#8a6530] border border-[color-mix(in_srgb,var(--color-cta)_30%,transparent)]",
 };
 
 /**

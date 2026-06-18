@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #fff1f2;
-  --color-surface: #ffffff;
-  --color-primary: #e11d48;
-  --color-primary-hover: #be123c;
-  --color-secondary: #fb7185;
-  --color-cta: #f97316;
-  --color-text: #431407;
-  --color-muted: #78716c;
-  --color-success: #16a34a;
-  --color-success-soft: #dcfce7;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fef2f2;
-  --color-border: #fecdd3;
-  --color-ring: #fb7185;
+  /* 暖陶土 + 米白：符合宪章，无蓝紫渐变 */
+  --color-bg: #f5f0eb;
+  --color-surface: #fffcf9;
+  --color-primary: #c67b5c;
+  --color-primary-hover: #b56a4d;
+  --color-secondary: #8b9a7e;
+  --color-cta: #c9923a;
+  --color-text: #2d2a26;
+  --color-muted: #8a8279;
+  --color-success: #5a8f6b;
+  --color-success-soft: #e8f0e6;
+  --color-danger: #c75c5c;
+  --color-danger-soft: #faf0ef;
+  --color-border: #e8e0d8;
+  --color-ring: #c67b5c;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -44,9 +45,6 @@ body {
   font-family: var(--font-body), "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-/**
- * 全局交互样式：焦点环、过渡、可点击光标
- */
 @layer utilities {
   .interactive {
     cursor: pointer;

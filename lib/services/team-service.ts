@@ -2,6 +2,48 @@ import { InvitationStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { zh } from "@/lib/messages/zh";
 
+const memberSelect = {
+  id: true,
+  email: true,
+  displayName: true,
+  role: true,
+  points: true,
+} as const;
+
+/**
+ * 是否为仅含创建者一人的空家庭（可放弃并加入其他家庭）
+ * @param userId - 用户 ID
+ * @param teamId - 团队 ID
+ */
+async function isAbandonableSoloTeam(
+  userId: string,
+  teamId: string
+): Promise<boolean> {
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    include: { members: { select: { id: true } } },
+  });
+  if (!team || team.ownerId !== userId) return false;
+  return team.members.length === 1 && team.members[0].id === userId;
+}
+
+/**
+ * 解散仅含本人的空家庭，便于接受其他家庭邀请
+ * @param userId - 用户 ID
+ * @param teamId - 待解散团队 ID
+ */
+async function abandonSoloTeam(userId: string, teamId: string) {
+  const canAbandon = await isAbandonableSoloTeam(userId, teamId);
+  if (!canAbandon) {
+    throw new Error(zh.team.alreadyInTeam);
+  }
+  await prisma.$transaction([
+    prisma.teamInvitation.deleteMany({ where: { teamId } }),
+    prisma.user.update({ where: { id: userId }, data: { teamId: null } }),
+    prisma.team.delete({ where: { id: teamId } }),
+  ]);
+}
+
 /**
  * 获取用户团队详情
  * @param userId - 当前用户 ID
@@ -9,27 +51,20 @@ import { zh } from "@/lib/messages/zh";
 export async function getTeamForUser(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      team: {
-        include: {
-          members: {
-            select: {
-              id: true,
-              email: true,
-              displayName: true,
-              role: true,
-              points: true,
-            },
-          },
-        },
-      },
-    },
+    include: { team: true },
   });
   if (!user?.team) return null;
+
+  const members = await prisma.user.findMany({
+    where: { teamId: user.team.id },
+    select: memberSelect,
+    orderBy: [{ createdAt: "asc" }],
+  });
+
   return {
     id: user.team.id,
     name: user.team.name,
-    members: user.team.members,
+    members,
   };
 }
 
@@ -50,7 +85,7 @@ export async function createTeam(userId: string, name?: string) {
       members: { connect: { id: userId } },
     },
     include: {
-      members: { select: { id: true, email: true, displayName: true } },
+      members: { select: memberSelect },
     },
   });
   await prisma.user.update({
@@ -84,8 +119,17 @@ export async function sendInvitation(
   if (!invitee) {
     throw new Error(zh.team.userNotFound);
   }
+  if (invitee.teamId === inviter.teamId) {
+    throw new Error(zh.team.alreadyMember);
+  }
   if (invitee.teamId) {
-    throw new Error(zh.team.alreadyInTeam);
+    const canLeaveSolo = await isAbandonableSoloTeam(
+      invitee.id,
+      invitee.teamId
+    );
+    if (!canLeaveSolo) {
+      throw new Error(zh.team.alreadyInOtherTeam);
+    }
   }
   const pending = await prisma.teamInvitation.findFirst({
     where: {
@@ -163,8 +207,11 @@ export async function respondToInvitation(
       updated.inviter.displayName
     );
   }
+  if (user.teamId === invitation.teamId) {
+    throw new Error(zh.team.alreadyMember);
+  }
   if (user.teamId) {
-    throw new Error(zh.team.alreadyInTeam);
+    await abandonSoloTeam(user.id, user.teamId);
   }
   await prisma.$transaction([
     prisma.teamInvitation.update({

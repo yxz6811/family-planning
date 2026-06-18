@@ -54,7 +54,80 @@ SSH_TARGET="${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}"
 SSH_CMD=(ssh -p "$DEPLOY_SSH_PORT" -o ConnectTimeout=20 -o ServerAliveInterval=10)
 RSYNC_SSH="ssh -p ${DEPLOY_SSH_PORT} -o ConnectTimeout=20 -o ServerAliveInterval=10"
 
+TAR_EXCLUDES=(
+  --exclude=node_modules
+  --exclude=.next
+  --exclude=.git
+  --exclude=.env
+  --exclude=.env.local
+  --exclude=prisma/dev.db
+  --exclude=prisma/dev.db-journal
+  --exclude=prisma/prod.db
+  --exclude=prisma/prod.db-journal
+  --exclude=.DS_Store
+)
+
 log() { echo "[deploy] $*"; }
+
+# 同步代码到远程（优先 rsync；远程无 rsync 时改用 tar+ssh）
+sync_code() {
+  if command -v rsync >/dev/null 2>&1 &&
+    "${SSH_CMD[@]}" "$SSH_TARGET" "command -v rsync" >/dev/null 2>&1; then
+    log "使用 rsync 同步..."
+    rsync -avz --delete \
+      --exclude node_modules/ \
+      --exclude .next/ \
+      --exclude .git/ \
+      --exclude .env \
+      --exclude .env.local \
+      --exclude .env*.local \
+      --exclude prisma/dev.db \
+      --exclude prisma/dev.db-journal \
+      --exclude prisma/prod.db \
+      --exclude prisma/prod.db-journal \
+      --exclude .DS_Store \
+      -e "$RSYNC_SSH" \
+      "${ROOT_DIR}/" "${SSH_TARGET}:${DEPLOY_REMOTE_DIR}/"
+    return
+  fi
+
+  log "远程未安装 rsync，使用 tar+ssh 同步..."
+  "${SSH_CMD[@]}" "$SSH_TARGET" "mkdir -p '${DEPLOY_REMOTE_DIR}'"
+  # macOS 打包时禁用 xattr，避免 Linux 解压刷屏警告
+  run_tar() {
+    COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 tar "$@" czf - \
+      "${TAR_EXCLUDES[@]}" -C "${ROOT_DIR}" .
+  }
+  if tar --help 2>&1 | grep -q 'disable-copyfile'; then
+    run_tar --disable-copyfile | \
+      "${SSH_CMD[@]}" "$SSH_TARGET" "cd '${DEPLOY_REMOTE_DIR}' && tar xzf - 2>/dev/null"
+  else
+    run_tar | \
+      "${SSH_CMD[@]}" "$SSH_TARGET" "cd '${DEPLOY_REMOTE_DIR}' && tar xzf - 2>/dev/null"
+  fi
+}
+
+# 等待 URL 返回 HTTP 200（PM2 重启后 Next.js 约需 1–3 秒就绪）
+wait_for_health() {
+  local url="$1"
+  local max_attempts="${2:-20}"
+  local attempt=1
+  local http_code="000"
+
+  while [[ "$attempt" -le "$max_attempts" ]]; do
+    http_code="$(curl -sI -o /dev/null -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")"
+    if [[ "$http_code" == "200" ]]; then
+      log "上线成功 (HTTP ${http_code}) → ${url}"
+      return 0
+    fi
+    log "健康检查 ${attempt}/${max_attempts}: HTTP ${http_code}，等待应用就绪..."
+    sleep 2
+    attempt=$((attempt + 1))
+  done
+
+  log "警告: 健康检查失败 (最后 HTTP ${http_code})，请查看 pm2 logs ${DEPLOY_PM2_NAME}"
+  return 1
+}
 
 cd "$ROOT_DIR"
 
@@ -67,20 +140,7 @@ if [[ "$CHECK_ONLY" == true ]]; then
 fi
 
 log "同步代码 → ${SSH_TARGET}:${DEPLOY_REMOTE_DIR}"
-rsync -avz --delete \
-  --exclude node_modules/ \
-  --exclude .next/ \
-  --exclude .git/ \
-  --exclude .env \
-  --exclude .env.local \
-  --exclude .env*.local \
-  --exclude prisma/dev.db \
-  --exclude prisma/dev.db-journal \
-  --exclude prisma/prod.db \
-  --exclude prisma/prod.db-journal \
-  --exclude .DS_Store \
-  -e "$RSYNC_SSH" \
-  "${ROOT_DIR}/" "${SSH_TARGET}:${DEPLOY_REMOTE_DIR}/"
+sync_code
 
 log "远程安装依赖、迁移、构建、重启..."
 "${SSH_CMD[@]}" "$SSH_TARGET" bash -s <<REMOTE
@@ -107,14 +167,22 @@ if [[ "${RUN_SEED}" == "true" ]]; then
   npm run db:seed
 fi
 
+echo "等待应用就绪..."
+ready=false
+for i in \$(seq 1 30); do
+  if curl -sf "http://127.0.0.1:3042/family-planning/login/" >/dev/null; then
+    ready=true
+    break
+  fi
+  sleep 1
+done
+if [[ "\$ready" != "true" ]]; then
+  echo "警告: 本地端口 3042 未在 30 秒内响应"
+  exit 1
+fi
+
 echo "远程部署完成"
 REMOTE
 
 log "健康检查 ${DEPLOY_HEALTH_URL}"
-HTTP_CODE="$(curl -sI -o /dev/null -w "%{http_code}" --max-time 15 "${DEPLOY_HEALTH_URL}" || true)"
-if [[ "$HTTP_CODE" == "200" ]]; then
-  log "上线成功 (HTTP ${HTTP_CODE}) → ${DEPLOY_HEALTH_URL}"
-else
-  log "警告: 健康检查返回 HTTP ${HTTP_CODE}，请登录服务器查看 pm2 logs ${DEPLOY_PM2_NAME}"
-  exit 1
-fi
+wait_for_health "${DEPLOY_HEALTH_URL}" 15

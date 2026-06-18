@@ -18,19 +18,19 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#E11D48` | `--color-primary` |
-| Secondary | `#FB7185` | `--color-secondary` |
-| CTA/Accent | `#F97316` | `--color-cta` |
-| Background | `#FFF1F2` | `--color-background` |
-| Text | `#881337` | `--color-text` |
+| Primary | `#C67B5C` | `--color-primary` |
+| Secondary | `#8B9A7E` | `--color-secondary` |
+| CTA/Accent | `#C9923A` | `--color-cta` |
+| Background | `#F5F0EB` | `--color-background` |
+| Text | `#2D2A26` | `--color-text` |
 
-**Color Notes:** Romantic rose + warm orange
+**Color Notes:** 暖陶土 + 米白 + 鼠尾草绿，无蓝紫渐变
 
 ### Typography
 
-- **Heading Font:** Baloo 2
-- **Body Font:** Comic Neue
-- **Mood:** kids, education, playful, friendly, colorful, learning
+- **Heading Font:** Lora
+- **Body Font:** Noto Sans SC
+- **Mood:** calm, warm, family, natural, trustworthy
 - **Google Fonts:** [Baloo 2 + Comic Neue](https://fonts.google.com/share?selection.family=Baloo+2:wght@400;500;600;700|Comic+Neue:wght@300;400;700)
 
 **CSS Import:**
